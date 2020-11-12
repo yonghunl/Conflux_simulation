@@ -37,40 +37,22 @@ def p_k_t(k, Z_t, beta):
     return ans
 
 
-def runExp(m, log_epsilon, fv):
-    events = int(2000 * log_epsilon)
+def runExp(m, log_epsilon, f):
+    events = int(2000*log_epsilon)
     beta_array = np.array([0.1, 0.15, 0.2, 0.25, .3, .35, 0.4])
     time_array = np.zeros_like(beta_array)
-    fv_effective = fv / (1.0 + 2 * fv)  # Forking
-    exp_random_v = np.random.exponential(1 / (m * fv_effective), size=events)
+    f_effective = f/(1.0+2*f) #Forking
+    exp_random_v = np.random.exponential(1/(m*f_effective), size=events)
     chain_random_v = np.random.randint(m, size=events)
+    #
+    #
+    #
     for j, beta in enumerate(beta_array):
-        #         exponent = 0.8*(1-2*beta)/(1-beta)*np.log((1-beta)/beta)
-        votes, votes_permanence_E, votes_permanence_V = np.zeros(m), np.zeros(m), np.zeros(m)
-        time, mean, var = 0, 0, 0
+        time = 0;
         for i, tDiff in enumerate(exp_random_v):
             time += tDiff
-            # Adding vote on a random chain
-            rChain = chain_random_v[i]
-            votes[rChain] += 1
-
-            # Solidified probability
-            Z_t = adverserial(time, beta, fv)
-            p_i = 1 - p_k_t(votes[rChain], Z_t, beta)
-            #             p_i = 1-np.power(np.e, -votes[rChain]*exponent) # Old calculation.
-
-            # Updating the mean an variance
-            mean -= votes_permanence_E[rChain]
-            var -= votes_permanence_V[rChain]
-            votes_permanence_E[rChain] = p_i
-            votes_permanence_V[rChain] = p_i * (1 - p_i)
-            mean += votes_permanence_E[rChain]
-            var += votes_permanence_V[rChain]
-
-            # The block got confirmed
-            if mean - np.sqrt(2 * var * log_epsilon) > m / 2 + 1:
-                time_array[j] = time
-                break
+            #decide if under attack, pick heaviest chain or fork
+            #update block count
     return time_array
 
 
